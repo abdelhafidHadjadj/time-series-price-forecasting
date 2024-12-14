@@ -5,11 +5,11 @@ library(forecast)
 
 
 # Vérifier que le fichier existe avant de le charger
-if ("cleaned_data.csv" %in% list.files()) {
-  data <- read.csv("cleaned_data.csv")
+if ("nasdaq_cleaned.csv" %in% list.files()) {
+  data <- read.csv("nasdaq_cleaned.csv")
   print(head(data))  # Afficher les premières lignes pour vérifier les données
 } else {
-  stop("Le fichier 'cleaned_data.csv' n'a pas été trouvé.")
+  stop("Le fichier 'nasdaq_cleaned.csv' n'a pas été trouvé.")
 }
 
 open_data <- data$Open
@@ -34,12 +34,14 @@ data$Close_diff <- c(NA, diff(data$Close, differences = 1))
 head(data)
 data <- na.omit(data)
 head(data)
+
 # Visualisation après transformation
 plot.ts(data$Close_diff, main="Prix de fermeture différenciés", ylab="Prix", col="blue")
 
 #Décomposition de la série temporelle
 
-close_ts <- ts(close_data, frequency=30)  # Remplacez la fréquence selon vos données
+# Remplacez la fréquence selon vos données
+close_ts <- ts(close_data, frequency=30)  
 
 # Décomposition
 stl_decomp <- stl(close_ts, s.window="periodic")
@@ -61,8 +63,6 @@ checkresiduals(arima_model)
 
 
 # Division des données en ensemble d’apprentissage et de test
-
-
 # Taille de l'ensemble d'entraînement
 train_size <- round(0.8 * length(close_ts))
 
@@ -71,7 +71,6 @@ train <- close_ts[1:train_size]
 
 # Ensemble de test : les éléments restants après 'train_size'
 test <- close_ts[(train_size + 1):length(close_ts)]
-
 
 
 # Ajustement du modèle sur les données d'apprentissage
@@ -84,11 +83,20 @@ forecast_test <- forecast(arima_train, h=length(test))
 rmse <- sqrt(mean((forecast_test$mean - test)^2))
 print(paste("RMSE: ", rmse))
 
-
-
-# Prévisions futures
-future_forecast <- forecast(arima_model, h=30)  # Prévisions pour 30 jours
+# Prévisions pour 30 jours
+future_forecast <- forecast(arima_model, h=30)  
 plot(future_forecast)
 
 # Intervalles de confiance inclus dans le graphique
+
+print(future_forecast)
+predictions <- future_forecast$mean
+print(predictions)  # Afficher les prix prédits
+
+write.csv(data.frame(future_forecast), "prix_predictifs.csv", row.names = FALSE)
+
+
+
+
+
 
